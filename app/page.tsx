@@ -10,8 +10,8 @@ export default async function Home() {
   const instructionSteps = normalizeInstructionSteps(drink.strInstructions);
 
   return (
-    <main className='min-h-screen p-6 md:p-10'>
-      <div className='mx-auto max-w-2xl'>
+    <main className='min-h-screen bg-gray-50 p-6 md:p-10 flex flex-col items-center'>
+      <div className='mx-auto w-full max-w-2xl rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8'>
         <h1 className='text-3xl font-bold tracking-tight text-gray-900'>
           {drink.strDrink ?? 'Unnamed cocktail'}
         </h1>
@@ -28,7 +28,7 @@ export default async function Home() {
           <img
             src={drink.strDrinkThumb}
             alt={drink.strDrink ?? 'Cocktail'}
-            className='mt-6 aspect-square w-full rounded-lg object-cover shadow-md'
+            className='mt-6 aspect-square w-full rounded-lg object-cover shadow-md md:max-w-sm md:mx-auto'
           />
         )}
 
