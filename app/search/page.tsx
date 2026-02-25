@@ -1,7 +1,12 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import type { CocktailDrink } from '@/lib/cocktail';
-import { getAlcoholTypes, getCocktailsByAlcohol } from '@/lib/cocktail';
+import {
+  getAlcoholTypes,
+  getCategories,
+  getCocktailsByAlcohol,
+  getCocktailsByCategory,
+} from '@/lib/cocktail';
 import { CocktailTypeDropdown } from './CocktailTypeDropdown';
 
 const SEARCH_RESULTS_LIMIT = 10;
@@ -9,19 +14,26 @@ const SEARCH_FETCH_MAX = 100;
 
 type SearchPageProps = {
   searchParams:
-    | Promise<{ type?: string; page?: string }>
-    | { type?: string; page?: string };
+    | Promise<{ type?: string; category?: string; page?: string }>
+    | { type?: string; category?: string; page?: string };
 };
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await Promise.resolve(searchParams);
   const selectedType = params.type?.trim();
+  const selectedCategory = params.category?.trim();
   const page = Math.max(1, parseInt(params.page ?? '1', 10) || 1);
 
-  const [alcoholTypes, allDrinks] = await Promise.all([
+  const hasFilter = Boolean(selectedType || selectedCategory);
+  const filterLabel = selectedType ?? selectedCategory ?? '';
+
+  const [alcoholTypes, categories, allDrinks] = await Promise.all([
     getAlcoholTypes(),
-    selectedType
-      ? getCocktailsByAlcohol(selectedType, SEARCH_FETCH_MAX)
+    getCategories(),
+    hasFilter
+      ? selectedType
+        ? getCocktailsByAlcohol(selectedType, SEARCH_FETCH_MAX)
+        : getCocktailsByCategory(selectedCategory!, SEARCH_FETCH_MAX)
       : Promise.resolve([]),
   ]);
 
@@ -43,30 +55,35 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           <Suspense
             fallback={<div className='text-sm text-gray-500'>Loading…</div>}
           >
-            <CocktailTypeDropdown options={alcoholTypes} />
+            <CocktailTypeDropdown
+              alcoholTypes={alcoholTypes}
+              categories={categories}
+            />
           </Suspense>
         </nav>
 
-        {selectedType && (
+        {hasFilter && (
           <section className='mt-6' aria-live='polite'>
             <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
               <h2 className='text-lg font-semibold text-gray-900'>
                 {total === 0
-                  ? `No results for “${selectedType}”`
+                  ? `No results for “${filterLabel}”`
                   : total <= SEARCH_RESULTS_LIMIT
-                    ? `Results for “${selectedType}” (${total})`
-                    : `Results ${start + 1}–${start + drinks.length} of ${total} for “${selectedType}”`}
+                    ? `Results for “${filterLabel}” (${total})`
+                    : `Results ${start + 1}–${start + drinks.length} of ${total} for “${filterLabel}”`}
               </h2>
               {total > SEARCH_RESULTS_LIMIT && (
                 <div className='flex items-center gap-2'>
                   <SearchPageLink
-                    type={selectedType}
+                    filterType={selectedType ? 'type' : 'category'}
+                    filterValue={filterLabel}
                     page={currentPage - 1}
                     disabled={currentPage <= 1}
                     label='Previous 10'
                   />
                   <SearchPageLink
-                    type={selectedType}
+                    filterType={selectedType ? 'type' : 'category'}
+                    filterValue={filterLabel}
                     page={currentPage + 1}
                     disabled={currentPage >= totalPages}
                     label='Next 10'
@@ -82,7 +99,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                   <SearchResultCard
                     key={drink.idDrink ?? drink.strDrink}
                     drink={drink}
-                    searchType={selectedType}
+                    filterType={selectedType ? 'type' : 'category'}
+                    filterValue={filterLabel}
                     searchPage={currentPage}
                   />
                 ))}
@@ -91,7 +109,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           </section>
         )}
 
-        {!selectedType && (
+        {!hasFilter && (
           <p className='mt-4 text-gray-600'>
             Choose a cocktail type above to see results.
           </p>
@@ -102,12 +120,14 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 }
 
 function SearchPageLink({
-  type,
+  filterType,
+  filterValue,
   page,
   disabled,
   label,
 }: {
-  type: string;
+  filterType: 'type' | 'category';
+  filterValue: string;
   page: number;
   disabled: boolean;
   label: string;
@@ -120,7 +140,14 @@ function SearchPageLink({
     );
   }
 
-  const href = `/search?type=${encodeURIComponent(type)}&page=${page}`;
+  const params = new URLSearchParams();
+  params.set(filterType, filterValue);
+
+  if (page > 1) {
+    params.set('page', String(page));
+  }
+
+  const href = `/search?${params.toString()}`;
 
   return (
     <Link
@@ -134,15 +161,18 @@ function SearchPageLink({
 
 function SearchResultCard({
   drink,
-  searchType,
+  filterType,
+  filterValue,
   searchPage,
 }: {
   drink: CocktailDrink;
-  searchType: string;
+  filterType: 'type' | 'category';
+  filterValue: string;
   searchPage: number;
 }) {
   const name = drink.strDrink ?? 'Unnamed cocktail';
-  const query = new URLSearchParams({ type: searchType });
+  const query = new URLSearchParams();
+  query.set(filterType, filterValue);
 
   if (searchPage > 1) {
     query.set('page', String(searchPage));

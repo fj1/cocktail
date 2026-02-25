@@ -106,6 +106,11 @@ export interface AlcoholListResponse {
   drinks: { strAlcoholic: string }[] | null;
 }
 
+/** Response from list.php?c=list */
+export interface CategoryListResponse {
+  drinks: { strCategory: string }[] | null;
+}
+
 /**
  * Fetches cocktail types (alcoholic / non-alcoholic / optional) for filter dropdowns.
  * Uses list.php?a=list (see https://www.thecocktaildb.com/api/json/v1/1/list.php?a=list).
@@ -124,6 +129,23 @@ export async function getAlcoholTypes(): Promise<string[]> {
 }
 
 /**
+ * Fetches cocktail categories for filter dropdowns (e.g. "Cocoa", "Cocktail").
+ * Uses list.php?c=list (see https://www.thecocktaildb.com/api/json/v1/1/list.php?c=list).
+ */
+export async function getCategories(): Promise<string[]> {
+  const res = await fetch(`${API_BASE}/list.php?c=list`);
+
+  if (!res.ok) {
+    throw new Error(`Cocktail API error: ${res.status} ${res.statusText}`);
+  }
+
+  const data = (await res.json()) as CategoryListResponse;
+  const drinks = data.drinks ?? [];
+
+  return drinks.map(d => d.strCategory).filter(Boolean);
+}
+
+/**
  * Fetches cocktails filtered by alcohol type (e.g. "Alcoholic", "Non alcoholic").
  * Uses filter.php?a=<type>. Returns at most `limit` drinks (default 10).
  */
@@ -133,6 +155,28 @@ export async function getCocktailsByAlcohol(
 ): Promise<CocktailDrink[]> {
   const res = await fetch(
     `${API_BASE}/filter.php?a=${encodeURIComponent(type)}`,
+  );
+
+  if (!res.ok) {
+    throw new Error(`Cocktail API error: ${res.status} ${res.statusText}`);
+  }
+
+  const data = (await res.json()) as CocktailApiResponse;
+  const drinks = data.drinks ?? [];
+
+  return drinks.slice(0, limit);
+}
+
+/**
+ * Fetches cocktails filtered by category (e.g. "Cocoa", "Cocktail").
+ * Uses filter.php?c=<category>. Returns at most `limit` drinks.
+ */
+export async function getCocktailsByCategory(
+  category: string,
+  limit = 10,
+): Promise<CocktailDrink[]> {
+  const res = await fetch(
+    `${API_BASE}/filter.php?c=${encodeURIComponent(category)}`,
   );
 
   if (!res.ok) {

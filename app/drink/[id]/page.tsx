@@ -6,8 +6,8 @@ import { CocktailCard } from '@/app/components/CocktailCard';
 type DrinkPageProps = {
   params: Promise<{ id: string }> | { id: string };
   searchParams:
-    | Promise<{ type?: string; page?: string }>
-    | { type?: string; page?: string };
+    | Promise<{ type?: string; category?: string; page?: string }>
+    | { type?: string; category?: string; page?: string };
 };
 
 export default async function DrinkPage({
@@ -17,6 +17,7 @@ export default async function DrinkPage({
   const { id } = await Promise.resolve(params);
   const resolvedSearchParams = await Promise.resolve(searchParams);
   const type = resolvedSearchParams.type?.trim();
+  const category = resolvedSearchParams.category?.trim();
   const page = resolvedSearchParams.page?.trim();
 
   const drink = await getCocktailById(id);
@@ -31,6 +32,10 @@ export default async function DrinkPage({
     searchParamsBack.set('type', type);
   }
 
+  if (category) {
+    searchParamsBack.set('category', category);
+  }
+
   if (page && page !== '1') {
     searchParamsBack.set('page', page);
   }
@@ -38,7 +43,7 @@ export default async function DrinkPage({
   const backHref = searchParamsBack.toString()
     ? `/search?${searchParamsBack.toString()}`
     : '/search';
-  const backLabel = type ? 'Back to results' : 'Back to search';
+  const backLabel = type || category ? 'Back to results' : 'Back to search';
 
   return (
     <main className='min-h-screen bg-gray-50 p-6 md:p-10 flex flex-col items-center'>
