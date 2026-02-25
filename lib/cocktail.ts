@@ -99,6 +99,71 @@ export function normalizeIngredientsList(
 const RANDOM_COCKTAIL_URL =
   'https://www.thecocktaildb.com/api/json/v1/1/random.php';
 
+const API_BASE = 'https://www.thecocktaildb.com/api/json/v1/1';
+
+/** Response from list.php?a=list */
+export interface AlcoholListResponse {
+  drinks: { strAlcoholic: string }[] | null;
+}
+
+/**
+ * Fetches cocktail types (alcoholic / non-alcoholic / optional) for filter dropdowns.
+ * Uses list.php?a=list (see https://www.thecocktaildb.com/api/json/v1/1/list.php?a=list).
+ */
+export async function getAlcoholTypes(): Promise<string[]> {
+  const res = await fetch(`${API_BASE}/list.php?a=list`);
+
+  if (!res.ok) {
+    throw new Error(`Cocktail API error: ${res.status} ${res.statusText}`);
+  }
+
+  const data = (await res.json()) as AlcoholListResponse;
+  const drinks = data.drinks ?? [];
+
+  return drinks.map(d => d.strAlcoholic).filter(Boolean);
+}
+
+/**
+ * Fetches cocktails filtered by alcohol type (e.g. "Alcoholic", "Non alcoholic").
+ * Uses filter.php?a=<type>. Returns at most `limit` drinks (default 10).
+ */
+export async function getCocktailsByAlcohol(
+  type: string,
+  limit = 10,
+): Promise<CocktailDrink[]> {
+  const res = await fetch(
+    `${API_BASE}/filter.php?a=${encodeURIComponent(type)}`,
+  );
+
+  if (!res.ok) {
+    throw new Error(`Cocktail API error: ${res.status} ${res.statusText}`);
+  }
+
+  const data = (await res.json()) as CocktailApiResponse;
+  const drinks = data.drinks ?? [];
+
+  return drinks.slice(0, limit);
+}
+
+/**
+ * Fetches a single cocktail by ID (lookup.php?i=id).
+ * Returns full drink details for the detail page.
+ */
+export async function getCocktailById(
+  id: string,
+): Promise<CocktailDrink | null> {
+  const res = await fetch(`${API_BASE}/lookup.php?i=${encodeURIComponent(id)}`);
+
+  if (!res.ok) {
+    throw new Error(`Cocktail API error: ${res.status} ${res.statusText}`);
+  }
+
+  const data = (await res.json()) as CocktailApiResponse;
+  const drink = data.drinks?.[0] ?? null;
+
+  return drink;
+}
+
 /**
  * Fetches a random cocktail from TheCocktailDB API.
  * Intended for server-side use (e.g. in a Server Component).
