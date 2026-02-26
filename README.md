@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Drink DB
 
-## Getting Started
+A Next.js app for browsing cocktails using [TheCocktailDB](https://www.thecocktaildb.com/) API.
 
-First, run the development server:
+## Features
+
+- **Random cocktail** — Home page shows a random drink in a card with image, instructions, and ingredients. “Get random cocktail” loads another.
+- **Search** — Filter by **cocktail type** (Alcoholic, Non alcoholic, Optional alcohol) or **category** (e.g. Cocoa, Cocktail) via a single dropdown. Results are paginated (10 per page) with Previous/Next.
+- **Drink detail** — Click a search result to see the full recipe in the same card layout. “Back to results” returns to the same search and page.
+
+## Tech stack
+
+- **Next.js 16** (App Router, bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app))
+- **TypeScript**
+- **Tailwind CSS v4**
+- Server Components and Server Actions for data and revalidation
+
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command         | Description             |
+| --------------- | ----------------------- |
+| `npm run dev`   | Start dev server        |
+| `npm run build` | Build for production    |
+| `npm run start` | Start production server |
+| `npm run lint`  | Run ESLint              |
 
-## Learn More
+## API
 
-To learn more about Next.js, take a look at the following resources:
+The app uses [TheCocktailDB](https://www.thecocktaildb.com/api.php) (no API key required):
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `random.php` — random drink (home)
+- `list.php?a=list` — alcohol types for dropdown
+- `list.php?c=list` — categories for dropdown
+- `filter.php?a=<type>` — drinks by alcohol type
+- `filter.php?c=<category>` — drinks by category
+- `lookup.php?i=<id>` — full drink by ID (detail page)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## API
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Coded with Cursor IDE. I collaborated with the agent to create a plan, and then incrementally added features and reviewed each set of changes.
